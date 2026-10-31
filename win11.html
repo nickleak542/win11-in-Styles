@@ -1,0 +1,551 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Win11 in React</title>
+<style>
+:root{--bg:#1c1c1f;--glass:rgba(32,32,36,.78);--glass2:rgba(52,52,58,.85);--tx:#fff;--mut:#b4b4bb;--ac:#4cc2ff;--bd:rgba(255,255,255,.1)}
+.light{--glass:rgba(243,243,246,.82);--glass2:rgba(255,255,255,.9);--tx:#1b1b1f;--mut:#5b5b63;--ac:#005fb8;--bd:rgba(0,0,0,.1)}
+*{box-sizing:border-box;margin:0}
+html,body,#root{height:100%;overflow:hidden}
+body{font-family:"Segoe UI Variable","Segoe UI",system-ui,sans-serif;color:var(--tx);user-select:none}
+.desk{position:fixed;inset:0;background:radial-gradient(ellipse at 30% 110%,#0a3d91 0,transparent 55%),radial-gradient(ellipse at 80% 20%,#4cc2ff 0,transparent 45%),linear-gradient(135deg,#0b1d4d,#1b6fd1 55%,#7fd0ff)}
+.light.desk{background:radial-gradient(ellipse at 30% 110%,#f6a5c0 0,transparent 55%),radial-gradient(ellipse at 80% 20%,#fff3b0 0,transparent 45%),linear-gradient(135deg,#8fb7ff,#c9d9ff 55%,#ffe3ec)}
+.icons{position:absolute;top:8px;left:8px;display:grid;grid-auto-flow:row;gap:4px}
+.icon{width:84px;padding:8px 4px;text-align:center;font-size:12px;border-radius:6px;color:#fff;text-shadow:0 1px 3px #000a;cursor:default;background:none;border:1px solid transparent}
+.icon:hover,.icon:focus-visible{background:rgba(255,255,255,.15);border-color:rgba(255,255,255,.25);outline:none}
+.icon b{display:block;font-size:34px;font-weight:400;margin-bottom:2px}
+.win{position:absolute;display:flex;flex-direction:column;background:var(--glass2);backdrop-filter:blur(30px);border:1px solid var(--bd);border-radius:8px;box-shadow:0 12px 40px rgba(0,0,0,.45);overflow:hidden;min-width:280px;min-height:160px}
+.win.max{inset:0 0 48px 0!important;width:auto!important;height:auto!important;border-radius:0}
+.win.min{display:none}
+.tb{display:flex;align-items:center;height:36px;padding-left:12px;font-size:12px;flex:none}
+.tb span{flex:1;overflow:hidden;white-space:nowrap}
+.tb button{width:46px;height:36px;border:0;background:none;color:var(--tx);font-size:13px}
+.tb button:hover{background:var(--bd)}
+.tb button.x:hover{background:#c42b1c;color:#fff}
+.body{flex:1;overflow:auto;background:var(--glass);display:flex;flex-direction:column;user-select:text}
+.tray{position:fixed;left:0;right:0;bottom:0;height:48px;background:var(--glass);backdrop-filter:blur(30px);border-top:1px solid var(--bd);display:flex;align-items:center;justify-content:center;gap:4px;z-index:9999}
+.tbtn{width:42px;height:40px;border-radius:6px;border:0;background:none;font-size:22px;position:relative;color:var(--tx)}
+.tbtn:hover,.tbtn:focus-visible{background:var(--bd);outline:none}
+.tbtn.on:after{content:"";position:absolute;bottom:2px;left:50%;width:8px;height:3px;margin-left:-4px;border-radius:2px;background:var(--mut)}
+.tbtn.act:after{background:var(--ac);width:16px;margin-left:-8px}
+.clock{position:absolute;right:10px;text-align:right;font-size:12px;line-height:1.25;padding:4px 8px;border-radius:6px}
+.clock:hover{background:var(--bd)}
+.start{position:fixed;left:50%;bottom:60px;width:min(580px,96vw);height:min(620px,calc(100% - 72px));margin-left:calc(min(580px,96vw)/-2);background:var(--glass);backdrop-filter:blur(40px);border:1px solid var(--bd);border-radius:10px;box-shadow:0 12px 40px rgba(0,0,0,.45);z-index:9998;padding:24px;display:flex;flex-direction:column;animation:up .18s ease-out}
+@keyframes up{from{transform:translateY(20px);opacity:0}}
+@media(prefers-reduced-motion:reduce){.start{animation:none}}
+.start input{width:100%;padding:10px 14px;border-radius:20px;border:1px solid var(--bd);background:var(--glass2);color:var(--tx);font:inherit;font-size:14px;margin-bottom:18px;outline:none}
+.start input:focus{border-color:var(--ac)}
+.start h4{font-size:13px;margin-bottom:10px}
+.grid{display:grid;grid-template-columns:repeat(4,1fr);gap:6px}
+.app{padding:12px 4px;text-align:center;font-size:12px;border-radius:6px;border:0;background:none;color:var(--tx)}
+.app:hover,.app:focus-visible{background:var(--bd);outline:none}
+.app b{display:block;font-size:28px;font-weight:400;margin-bottom:4px}
+.foot{margin-top:auto;display:flex;justify-content:space-between;align-items:center;padding-top:14px;border-top:1px solid var(--bd);font-size:13px}
+.foot button{border:0;background:none;color:var(--tx);font-size:18px;padding:6px 10px;border-radius:6px}
+.foot button:hover{background:var(--bd)}
+textarea{flex:1;border:0;outline:0;resize:none;padding:12px;background:transparent;color:var(--tx);font:14px Consolas,monospace;min-height:120px}
+.calc{display:grid;grid-template-columns:repeat(4,1fr);gap:3px;padding:6px;flex:1}
+.calc .scr{grid-column:1/-1;text-align:right;font-size:34px;padding:14px 10px;min-height:70px;overflow:hidden}
+.calc button{border:0;border-radius:5px;background:var(--glass2);color:var(--tx);font-size:16px;min-height:42px}
+.calc button:hover{filter:brightness(1.25)}
+.calc .op{background:var(--bd)}.calc .eq{background:var(--ac);color:#fff}
+.set{padding:20px;font-size:14px;display:grid;gap:12px;align-content:start}
+.row{display:flex;justify-content:space-between;align-items:center;padding:14px;border-radius:6px;background:var(--glass2);border:1px solid var(--bd)}
+.sw{width:44px;height:22px;border-radius:11px;border:1px solid var(--mut);background:none;position:relative}
+.sw i{position:absolute;top:3px;left:4px;width:14px;height:14px;border-radius:50%;background:var(--mut);transition:left .15s}
+.sw.on{background:var(--ac);border-color:var(--ac)}.sw.on i{left:25px;background:#fff}
+.about{padding:24px;font-size:14px;line-height:1.6}
+.about h2{font-weight:600;margin-bottom:8px}
+.store{padding:16px;display:grid;gap:10px;align-content:start}
+.store input{padding:9px 14px;border-radius:20px;border:1px solid var(--bd);background:var(--glass2);color:var(--tx);font:inherit;font-size:14px;outline:none}
+.store input:focus{border-color:var(--ac)}
+.item{display:flex;align-items:center;gap:14px;padding:12px;border-radius:8px;background:var(--glass2);border:1px solid var(--bd)}
+.item>b{font-size:32px;font-weight:400}
+.item div{flex:1;font-size:13px;color:var(--mut)}.item div strong{display:block;color:var(--tx);font-size:14px;font-weight:600}
+.btn{border:1px solid var(--bd);background:var(--glass);color:var(--tx);padding:6px 16px;border-radius:5px;font-size:13px;min-width:84px}
+.btn:hover{filter:brightness(1.2)}.btn.pri{background:var(--ac);border-color:var(--ac);color:#fff}.btn:disabled{opacity:.6}
+.sw-t{padding:24px;text-align:center}.sw-t .big{font:300 48px Consolas,monospace;margin-bottom:16px}.sw-t .btn{margin:0 4px}
+.ttt{display:grid;grid-template-columns:repeat(3,80px);gap:6px;justify-content:center;padding:16px 0}
+.ttt button{height:80px;font-size:36px;border:0;border-radius:6px;background:var(--glass2);color:var(--tx)}
+.ttt button:hover:not(:disabled){filter:brightness(1.25)}
+.pbar{display:flex;gap:6px;padding:8px;align-items:center;flex-wrap:wrap}
+.pbar i{width:22px;height:22px;border-radius:50%;border:2px solid var(--bd);cursor:pointer;display:inline-block}
+.pbar i.sel{border-color:var(--ac)}
+canvas{background:#fff;touch-action:none;cursor:crosshair;margin:0 8px 8px;border-radius:4px}
+.walls{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.wp{width:72px;height:46px;border-radius:6px;border:2px solid var(--bd);padding:0}
+.wp.sel{border-color:var(--ac)}
+.row.col{flex-direction:column;align-items:stretch;gap:12px}
+.web{display:flex;flex-direction:column;flex:1;min-height:0}
+.web .bar{display:flex;justify-content:space-between;align-items:center;padding:4px 10px;font-size:12px;color:var(--mut)}
+.web iframe{flex:1;border:0;background:#222;width:100%}
+.dragging iframe{pointer-events:none}
+.cmd{flex:1;background:#0c0c0c;color:#ccc;font:14px/1.35 Consolas,"Cascadia Mono",monospace;padding:8px;overflow:auto;cursor:text;white-space:pre-wrap;word-break:break-all;user-select:text}
+.cl{display:flex}.cl input{flex:1;min-width:0;background:none;border:0;outline:0;color:#fff;font:inherit;padding:0 0 0 2px}
+.menu{position:fixed;z-index:10000;background:var(--glass2);backdrop-filter:blur(30px);border:1px solid var(--bd);border-radius:8px;padding:4px;min-width:180px;box-shadow:0 8px 30px rgba(0,0,0,.4)}
+.menu button{display:block;width:100%;text-align:left;border:0;background:none;color:var(--tx);padding:8px 12px;border-radius:4px;font-size:13px}
+.menu button:hover{background:var(--bd)}
+</style>
+</head>
+<body>
+<div id="root"></div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.3.1/umd/react.production.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.3.1/umd/react-dom.production.min.js"></script>
+<script>
+const { useState, useEffect, useRef, createElement: h } = React;
+
+/* ---------- Apps ---------- */
+function Notepad() {
+  const [t, setT] = useState("Welcome to Notepad.\nType something here…");
+  return h("textarea", { value: t, onChange: e => setT(e.target.value), spellCheck: false, "aria-label": "Text" });
+}
+
+function Calculator() {
+  const [cur, setCur] = useState("0"), [acc, setAcc] = useState(null), [op, setOp] = useState(null), [fresh, setFresh] = useState(true);
+  const calc = (a, b, o) => o === "+" ? a + b : o === "−" ? a - b : o === "×" ? a * b : o === "÷" ? (b === 0 ? NaN : a / b) : b;
+  const fmt = n => isNaN(n) ? "Cannot divide by zero" : String(+n.toPrecision(12));
+  const press = k => {
+    if (/\d/.test(k)) { setCur(fresh || cur === "0" ? k : cur + k); setFresh(false); }
+    else if (k === ".") { if (fresh) { setCur("0."); setFresh(false); } else if (!cur.includes(".")) setCur(cur + "."); }
+    else if (k === "C") { setCur("0"); setAcc(null); setOp(null); setFresh(true); }
+    else if (k === "⌫") setCur(cur.length > 1 && !fresh ? cur.slice(0, -1) : "0");
+    else if (k === "±") setCur(fmt(-parseFloat(cur)));
+    else {
+      const v = parseFloat(cur);
+      const r = acc !== null && op && !fresh ? calc(acc, v, op) : v;
+      if (k === "=") { setCur(fmt(r)); setAcc(null); setOp(null); }
+      else { setAcc(r); setOp(k); setCur(fmt(r)); }
+      setFresh(true);
+    }
+  };
+  const keys = ["C","±","⌫","÷","7","8","9","×","4","5","6","−","1","2","3","+","0",".","="];
+  return h("div", { className: "calc" },
+    h("div", { className: "scr" }, cur),
+    keys.map(k => h("button", {
+      key: k, onClick: () => press(k),
+      className: "÷×−+".includes(k) ? "op" : k === "=" ? "eq" : "",
+      style: k === "0" ? { gridColumn: "span 2" } : null
+    }, k)));
+}
+
+function Switch({ on, set, label }) {
+  return h("button", { className: "sw" + (on ? " on" : ""), role: "switch", "aria-checked": on, "aria-label": label, onClick: () => set(!on) }, h("i"));
+}
+
+const DEF_LOGO = "https://win11.blueedge.me/img/icon/home.png";
+const DEF_WALL = "radial-gradient(ellipse at 30% 110%,#0a3d91 0,transparent 55%),radial-gradient(ellipse at 80% 20%,#4cc2ff 0,transparent 45%),linear-gradient(135deg,#0b1d4d,#1b6fd1 55%,#7fd0ff)";
+const WALLS = [
+  { n: "Bloom", c: null },
+  { n: "Sunset", c: "linear-gradient(160deg,#2b1055,#d53369 55%,#ffb26b)" },
+  { n: "Forest", c: "linear-gradient(160deg,#0f2d1f,#2e7d4f 60%,#b7e4a8)" },
+  { n: "Graphite", c: "linear-gradient(160deg,#111,#2d2d34 60%,#55555f)" },
+  { n: "Dune", c: "linear-gradient(160deg,#6b3e26,#d9a066 60%,#f6e3b4)" },
+];
+
+const bingDate = i => new Date(Date.now() - i * 864e5).toISOString().slice(0, 10);
+const bingUrl = d => "https://bing.npanuhin.me/US/en/" + d + ".jpg";
+const bingCss = u => 'center/cover no-repeat url("' + u + '")';
+
+const SUBS = ["wallpapers", "EarthPorn", "SpacePorn", "Amoledbackgrounds", "CityPorn"];
+const PROVIDERS = {
+  Bing: () => new Promise(res => {
+    const out = []; let c = 0;
+    for (let i = 0; i < 6; i++) {
+      const d = bingDate(i), u = bingUrl(d), im = new Image();
+      const fin = () => { if (++c === 6) res(out.sort((a, b) => a.id < b.id ? 1 : -1)); };
+      im.onload = () => { out.push({ id: d, url: u, th: u, t: d }); fin(); };
+      im.onerror = fin; im.src = u;
+    }
+  }),
+  Reddit: async sub => {
+    const r = await fetch("https://www.reddit.com/r/" + sub + "/top.json?t=week&limit=40&raw_json=1");
+    if (!r.ok) throw new Error("Reddit " + r.status);
+    const j = await r.json();
+    return j.data.children.map(c => c.data)
+      .filter(p => !p.over_18 && /\.(jpe?g|png)$/i.test(p.url || ""))
+      .slice(0, 8)
+      .map(p => {
+        const rs = p.preview && p.preview.images[0].resolutions || [];
+        const th = (rs.find(x => x.width >= 320) || rs[rs.length - 1] || { url: p.url }).url;
+        return { id: p.id, url: p.url, th, t: p.title };
+      });
+  },
+  NASA: async () => {
+    const r = await fetch("https://api.nasa.gov/planetary/apod?api_key=DEMO_KEY&count=10");
+    if (!r.ok) throw new Error("NASA " + r.status);
+    return (await r.json()).filter(d => d.media_type === "image")
+      .map(d => ({ id: d.date, url: d.hdurl || d.url, th: d.url, t: d.title }));
+  },
+  Picsum: () => Promise.resolve(Array.from({ length: 8 }, () => {
+    const k = Math.random().toString(36).slice(2, 8);
+    return { id: k, url: "https://picsum.photos/seed/" + k + "/1920/1080", th: "https://picsum.photos/seed/" + k + "/240/150", t: "Random photo" };
+  })),
+};
+
+function Settings({ ctx }) {
+  const file = useRef(), lf = useRef();
+  const [prov, setProv] = useState("Bing"), [sub, setSub] = useState(SUBS[0]), [n, setN] = useState(0);
+  const [items, setItems] = useState([]), [st, setSt] = useState("loading");
+  useEffect(() => {
+    let live = true;
+    setSt("loading"); setItems([]);
+    Promise.resolve().then(() => PROVIDERS[prov](sub)).then(
+      r => { if (live) { setItems(r); setSt(r.length ? "ok" : "empty"); } },
+      () => live && setSt("error"));
+    return () => { live = false; };
+  }, [prov, sub, n]);
+  const pickLogo = e => {
+    const f = e.target.files[0]; e.target.value = "";
+    if (!f) return;
+    const img = new Image(), u = URL.createObjectURL(f);
+    img.onload = () => {
+      const c = document.createElement("canvas"); c.width = c.height = 96;
+      const k = Math.min(img.width, img.height), g = c.getContext("2d");
+      g.drawImage(img, (img.width - k) / 2, (img.height - k) / 2, k, k, 0, 0, 96, 96);
+      ctx.setLogo(c.toDataURL("image/png")); URL.revokeObjectURL(u);
+    };
+    img.src = u;
+  };
+  const pick = e => {
+    const f = e.target.files[0];
+    if (f) ctx.pickWall('center/cover no-repeat url("' + URL.createObjectURL(f) + '")');
+    e.target.value = "";
+  };
+  return h("div", { className: "set" },
+    h("div", { className: "row col" },
+      h("span", null, "Wallpaper"),
+      h("div", { className: "walls" },
+        WALLS.map(w => h("button", {
+          key: w.n, className: "wp" + (ctx.wall === w.c ? " sel" : ""), title: w.n, "aria-label": w.n + " wallpaper",
+          style: { background: w.c || (ctx.light ? "linear-gradient(135deg,#8fb7ff,#ffe3ec)" : DEF_WALL) }, onClick: () => ctx.pickWall(w.c)
+        })),
+        h("button", { className: "btn", onClick: () => file.current.click() }, "Browse photos…"),
+        h("input", { ref: file, type: "file", accept: "image/*", hidden: true, onChange: pick }))),
+    h("div", { className: "row col" },
+      h("span", null, "Online wallpapers"),
+      h("div", { className: "walls" },
+        Object.keys(PROVIDERS).map(k => h("button", { key: k, className: "btn" + (prov === k ? " pri" : ""), onClick: () => setProv(k) }, k)),
+        h("button", { className: "btn", onClick: () => setN(n + 1) }, "Refresh")),
+      prov === "Reddit" && h("select", { className: "btn", value: sub, onChange: e => setSub(e.target.value), "aria-label": "Subreddit", style: { alignSelf: "flex-start" } },
+        SUBS.map(x => h("option", { key: x, value: x }, "r/" + x))),
+      prov === "Bing" && h("div", { style: { display: "flex", justifyContent: "space-between", alignItems: "center", fontSize: 13 } },
+        h("span", null, "Use the newest picture automatically"),
+        h(Switch, { on: ctx.bing, set: ctx.setBing, label: "Use Bing picture of the day" })),
+      h("div", { className: "walls" },
+        st === "loading" && h("span", { style: { color: "var(--mut)", fontSize: 12 } }, "Loading…"),
+        st === "empty" && h("span", { style: { color: "var(--mut)", fontSize: 12 } }, "No pictures found. Try Refresh."),
+        st === "error" && h("span", { style: { color: "var(--mut)", fontSize: 12 } }, prov + " didn’t respond. Check your connection or try another source."),
+        items.map(x => h("button", {
+          key: x.id, className: "wp" + (ctx.wall === bingCss(x.url) ? " sel" : ""), title: x.t || x.id, "aria-label": x.t || x.id,
+          style: { background: bingCss(x.th) }, onClick: () => ctx.pickWall(bingCss(x.url))
+        })))),
+    h("div", { className: "row" },
+      h("span", null, "Start button logo"),
+      h("div", { className: "walls" },
+        ctx.logo && h("img", { src: ctx.logo, alt: "", width: 32, height: 32, style: { borderRadius: 4 } }),
+        h("button", { className: "btn", onClick: () => lf.current.click() }, "Choose image…"),
+        ctx.logo && h("button", { className: "btn", onClick: () => ctx.setLogo(null) }, "Reset"),
+        h("input", { ref: lf, type: "file", accept: "image/*", hidden: true, onChange: pickLogo }))),
+    h("div", { className: "row" }, h("span", null, "Light mode"), h(Switch, { on: ctx.light, set: ctx.setLight, label: "Light mode" })),
+    h("div", { className: "row" }, h("span", null, "Show desktop icons"), h(Switch, { on: ctx.icons, set: ctx.setIcons, label: "Show desktop icons" })));
+}
+
+function Web({ url }) {
+  return h("div", { className: "web" },
+    h("div", { className: "bar" }, h("span", null, url.replace("https://", "")),
+      h("a", { href: url, target: "_blank", rel: "noopener", style: { color: "var(--ac)" } }, "Open in a new tab")),
+    h("iframe", { src: url, title: url, allow: "fullscreen; pointer-lock; autoplay; clipboard-read; clipboard-write; gamepad" }));
+}
+
+function About() {
+  return h("div", { className: "about" },
+    h("h2", null, "Win11 in React"),
+    h("p", null, "A small Windows 11 desktop built with React, CSS and JavaScript in one file."),
+    h("p", null, "Drag windows by the title bar, double-click it to maximize, and right-click the desktop for options."));
+}
+
+function Stopwatch() {
+  const [ms, setMs] = useState(0), [run, setRun] = useState(false);
+  useEffect(() => {
+    if (!run) return;
+    const t0 = Date.now() - ms, i = setInterval(() => setMs(Date.now() - t0), 50);
+    return () => clearInterval(i);
+  }, [run]);
+  const f = n => String(n).padStart(2, "0");
+  return h("div", { className: "sw-t" },
+    h("div", { className: "big" }, f(Math.floor(ms / 60000)) + ":" + f(Math.floor(ms / 1000) % 60) + "." + f(Math.floor(ms / 10) % 100)),
+    h("button", { className: "btn pri", onClick: () => setRun(!run) }, run ? "Pause" : "Start"),
+    h("button", { className: "btn", onClick: () => { setRun(false); setMs(0); } }, "Reset"));
+}
+
+function TicTacToe() {
+  const [b, setB] = useState(Array(9).fill("")), [x, setX] = useState(true);
+  const L = [[0,1,2],[3,4,5],[6,7,8],[0,3,6],[1,4,7],[2,5,8],[0,4,8],[2,4,6]];
+  const win = L.find(([a, c, d]) => b[a] && b[a] === b[c] && b[a] === b[d]);
+  const full = b.every(Boolean);
+  const msg = win ? b[win[0]] + " wins!" : full ? "It's a draw." : (x ? "X" : "O") + " to play";
+  return h("div", { style: { textAlign: "center", padding: 12 } },
+    h("div", { style: { fontSize: 15, marginBottom: 4 } }, msg),
+    h("div", { className: "ttt" }, b.map((v, i) => h("button", {
+      key: i, disabled: !!v || !!win, "aria-label": "Square " + (i + 1) + (v ? ", " + v : ""),
+      onClick: () => { const n = b.slice(); n[i] = x ? "X" : "O"; setB(n); setX(!x); }
+    }, v))),
+    h("button", { className: "btn", onClick: () => { setB(Array(9).fill("")); setX(true); } }, "New game"));
+}
+
+function Paint() {
+  const cv = useRef(), [col, setCol] = useState("#1b6fd1");
+  const colors = ["#111111", "#e03131", "#f08c00", "#2f9e44", "#1b6fd1", "#9c36b5"];
+  const down = e => {
+    const c = cv.current, g = c.getContext("2d"), r = c.getBoundingClientRect();
+    const pt = ev => [(ev.clientX - r.left) * c.width / r.width, (ev.clientY - r.top) * c.height / r.height];
+    g.strokeStyle = col; g.lineWidth = 3; g.lineCap = "round";
+    g.beginPath(); g.moveTo(...pt(e)); g.lineTo(...pt(e)); g.stroke();
+    const mv = ev => { g.lineTo(...pt(ev)); g.stroke(); };
+    const up = () => { removeEventListener("pointermove", mv); removeEventListener("pointerup", up); };
+    addEventListener("pointermove", mv); addEventListener("pointerup", up);
+  };
+  return h("div", null,
+    h("div", { className: "pbar" },
+      colors.map(c => h("i", { key: c, className: c === col ? "sel" : "", style: { background: c }, onClick: () => setCol(c), role: "button", "aria-label": "Color " + c })),
+      h("button", { className: "btn", onClick: () => { const c = cv.current; c.getContext("2d").clearRect(0, 0, c.width, c.height); } }, "Clear")),
+    h("canvas", { ref: cv, width: 440, height: 280, onPointerDown: down, style: { width: "calc(100% - 16px)" } }));
+}
+
+function Store({ ctx }) {
+  const [q, setQ] = useState(""), [busy, setBusy] = useState(null);
+  const get = id => { setBusy(id); setTimeout(() => { ctx.install(id); setBusy(null); }, 900); };
+  const items = Object.entries(APPS).filter(([, a]) => a.title.toLowerCase().includes(q.toLowerCase()));
+  return h("div", { className: "store" },
+    h("input", { placeholder: "Search apps", value: q, onChange: e => setQ(e.target.value), "aria-label": "Search apps" }),
+    items.map(([id, a]) => {
+      const on = ctx.installed.includes(id);
+      return h("div", { key: id, className: "item" },
+        h("b", null, a.icon),
+        h("div", null, h("strong", null, a.title), a.desc),
+        on
+          ? h("div", { style: { flex: "none", display: "flex", gap: 6 } },
+              h("button", { className: "btn pri", onClick: () => ctx.openApp(id) }, "Open"),
+              !a.sys && h("button", { className: "btn", onClick: () => ctx.uninstall(id) }, "Remove"))
+          : h("button", { className: "btn pri", disabled: busy === id, onClick: () => get(id) }, busy === id ? "Installing…" : "Get"));
+    }),
+    items.length === 0 && h("p", { style: { color: "var(--mut)", fontSize: 13 } }, "No apps match “" + q + "”."));
+}
+
+const FS = {
+  "C:\\": ["Program Files", "Users", "Windows"],
+  "C:\\Users": ["Guest"],
+  "C:\\Users\\Guest": ["Desktop", "Documents", "Downloads", "Music", "Pictures", "Videos"],
+};
+
+function Cmd({ ctx }) {
+  const [out, setOut] = useState(["Win11 in React [Version 1.0]", "Type help to see the available commands.", ""]);
+  const [cwd, setCwd] = useState("C:\\Users\\Guest"), [inp, setInp] = useState("");
+  const [hist, setHist] = useState([]), [hi, setHi] = useState(-1);
+  const box = useRef(), ir = useRef();
+  useEffect(() => { box.current.scrollTop = box.current.scrollHeight; }, [out]);
+
+  const exec = raw => {
+    const [c0, ...rest] = raw.trim().split(/\s+/), cmd = (c0 || "").toLowerCase(), arg = rest.join(" ");
+    const kids = FS[cwd] || [];
+    let res = [];
+    if (cmd === "cls") { setOut([]); return; }
+    else if (cmd === "help") res = ["help      Show this list", "cls       Clear the screen", "echo      Print text", "dir       List the current folder", "cd        Change folder (cd .., cd \\, cd Documents)",
+      "date      Show the date", "time      Show the time", "ver       Show the version", "whoami    Show the current user", "hostname  Show the computer name",
+      "ipconfig  Show network info (simulated)", "ping      Ping a host (simulated)", "start     Open an app or a web address (start notepad)", "exit      Close this window"];
+    else if (cmd === "echo") res = [arg];
+    else if (cmd === "ver") res = ["Win11 in React [Version 1.0]"];
+    else if (cmd === "date") res = ["The current date is: " + new Date().toLocaleDateString()];
+    else if (cmd === "time") res = ["The current time is: " + new Date().toLocaleTimeString()];
+    else if (cmd === "whoami") res = ["win11\\guest"];
+    else if (cmd === "hostname") res = ["WIN11-REACT"];
+    else if (cmd === "ipconfig") res = ["Windows IP Configuration (simulated)", "", "Ethernet adapter Ethernet:", "   IPv4 Address. . . . . : 192.168.1.23", "   Subnet Mask . . . . . : 255.255.255.0", "   Default Gateway . . . : 192.168.1.1"];
+    else if (cmd === "ping") {
+      if (!arg) res = ["Usage: ping <host>"];
+      else {
+        const t = () => 10 + Math.floor(Math.random() * 30);
+        res = ["Pinging " + arg + " with 32 bytes of data (simulated):", ...[0, 1, 2, 3].map(() => "Reply from " + arg + ": bytes=32 time=" + t() + "ms TTL=117"), "", "Ping statistics for " + arg + ": Sent = 4, Received = 4, Lost = 0 (0% loss)"];
+      }
+    }
+    else if (cmd === "dir") res = [" Directory of " + cwd, "", ...kids.map(k => "<DIR>          " + k), "               0 File(s)", "               " + kids.length + " Dir(s)"];
+    else if (cmd === "cd" || cmd === "cd..") {
+      const a = cmd === "cd.." ? ".." : arg;
+      if (!a) res = [cwd];
+      else if (a === "\\" || a === "/") setCwd("C:\\");
+      else if (a === "..") setCwd(cwd.includes("\\", 3) ? cwd.slice(0, cwd.lastIndexOf("\\")) : "C:\\");
+      else {
+        const k = kids.find(x => x.toLowerCase() === a.toLowerCase());
+        if (k) setCwd((cwd.endsWith("\\") ? cwd : cwd + "\\") + k);
+        else res = ["The system cannot find the path specified."];
+      }
+    }
+    else if (cmd === "start") {
+      const q = arg.toLowerCase();
+      if (/^https?:\/\//.test(arg)) window.open(arg, "_blank", "noopener");
+      else if (!q) res = ["Usage: start <app name or web address>"];
+      else {
+        const f = Object.entries(APPS).find(([id, a]) => id === q || a.title.toLowerCase() === q);
+        if (!f) res = ["Cannot find \"" + arg + "\"."];
+        else if (!ctx.installed.includes(f[0])) res = [f[1].title + " isn’t installed. Get it from the Store."];
+        else ctx.openApp(f[0]);
+      }
+    }
+    else if (cmd === "exit") { ctx.close(ctx.winId); return; }
+    else if (cmd) res = ["'" + c0 + "' is not recognized as an internal or external command,", "operable program or batch file."];
+    setOut(o => [...o, cwd + ">" + raw, ...res, ...(res.length ? [""] : [])]);
+  };
+
+  const key = e => {
+    if (e.key === "Enter") {
+      if (inp.trim()) setHist(h2 => [...h2, inp]);
+      setHi(-1); exec(inp); setInp("");
+    } else if (e.key === "ArrowUp") {
+      e.preventDefault();
+      const n = Math.min(hist.length - 1, hi + 1); if (hist.length) { setHi(n); setInp(hist[hist.length - 1 - n]); }
+    } else if (e.key === "ArrowDown") {
+      e.preventDefault();
+      const n = hi - 1; setHi(Math.max(n, -1)); setInp(n < 0 ? "" : hist[hist.length - 1 - n]);
+    }
+  };
+
+  return h("div", { className: "cmd", ref: box, onClick: () => ir.current.focus() },
+    out.map((l, i) => h("div", { key: i }, l || " ")),
+    h("div", { className: "cl" }, h("span", null, cwd + ">"),
+      h("input", { ref: ir, value: inp, onChange: e => setInp(e.target.value), onKeyDown: key, autoFocus: true, spellCheck: false, autoComplete: "off", "aria-label": "Command" })));
+}
+
+const APPS = {
+  cmd:      { title: "Command Prompt", icon: "⌨️", w: 640, h: 380, desc: "Run commands in a simulated terminal.", el: ctx => h(Cmd, { ctx }) },
+  photopea: { title: "Photopea",   icon: "🖼️", w: 900, h: 600, desc: "Online photo editor.", el: () => h(Web, { url: "https://www.photopea.com" }) },
+  wavacity: { title: "Wavacity",   icon: "🎧", w: 900, h: 600, desc: "Audio editor based on Audacity.", el: () => h(Web, { url: "https://wavacity.com" }) },
+  krunker:  { title: "Krunker",    icon: "🎯", w: 900, h: 600, desc: "Browser shooter.", el: () => h(Web, { url: "https://krunker.io" }) },
+  store:    { title: "Store",      icon: "🛍️", w: 520, h: 440, sys: 1, desc: "Find and install apps.", el: ctx => h(Store, { ctx }) },
+  stopwatch:{ title: "Stopwatch",  icon: "⏱️", w: 320, h: 230, desc: "Time anything to the hundredth.", el: () => h(Stopwatch) },
+  tictactoe:{ title: "Tic-Tac-Toe",icon: "⭕", w: 320, h: 420, desc: "Two-player game on one screen.", el: () => h(TicTacToe) },
+  paint:    { title: "Paint",      icon: "🎨", w: 480, h: 400, desc: "Sketch with a few colors.", el: () => h(Paint) },
+  notepad:  { title: "Notepad",    icon: "📝", w: 460, h: 340, desc: "Quick plain-text notes.", el: () => h(Notepad) },
+  calc:     { title: "Calculator", icon: "🧮", w: 300, h: 460, desc: "Basic arithmetic.", el: () => h(Calculator) },
+  settings: { title: "Settings",   icon: "⚙️", w: 560, h: 640, sys: 1, desc: "Theme and desktop options.", el: ctx => h(Settings, { ctx }) },
+  about:    { title: "About",      icon: "💠", w: 420, h: 240, desc: "About this desktop.", el: () => h(About) },
+};
+
+/* ---------- Window ---------- */
+function Win({ w, ctx }) {
+  const app = APPS[w.app], ref = useRef();
+  const drag = e => {
+    if (w.max || e.target.tagName === "BUTTON") return;
+    ctx.focus(w.id);
+    const sx = e.clientX - w.x, sy = e.clientY - w.y;
+    const mv = ev => ctx.patch(w.id, { x: ev.clientX - sx, y: Math.max(0, ev.clientY - sy) });
+    const up = () => { document.body.classList.remove("dragging"); removeEventListener("pointermove", mv); removeEventListener("pointerup", up); };
+    document.body.classList.add("dragging");
+    addEventListener("pointermove", mv); addEventListener("pointerup", up);
+  };
+  return h("div", {
+    ref, className: "win" + (w.max ? " max" : "") + (w.min ? " min" : ""),
+    style: { left: w.x, top: w.y, width: w.w, height: w.h, zIndex: w.z },
+    onPointerDown: () => ctx.focus(w.id), role: "dialog", "aria-label": app.title
+  },
+    h("div", { className: "tb", onPointerDown: drag, onDoubleClick: () => ctx.patch(w.id, { max: !w.max }) },
+      h("span", null, app.icon + "  " + app.title),
+      h("button", { onClick: () => ctx.patch(w.id, { min: true }), "aria-label": "Minimize" }, "—"),
+      h("button", { onClick: () => ctx.patch(w.id, { max: !w.max }), "aria-label": "Maximize" }, w.max ? "❐" : "☐"),
+      h("button", { className: "x", onClick: () => ctx.close(w.id), "aria-label": "Close" }, "✕")),
+    h("div", { className: "body" }, app.el({ ...ctx, winId: w.id })));
+}
+
+/* ---------- Shell ---------- */
+function Clock() {
+  const [n, setN] = useState(new Date());
+  useEffect(() => { const i = setInterval(() => setN(new Date()), 1000); return () => clearInterval(i); }, []);
+  return h("div", { className: "clock" },
+    h("div", null, n.toLocaleTimeString([], { hour: "numeric", minute: "2-digit" })),
+    h("div", null, n.toLocaleDateString()));
+}
+
+function StartMenu({ apps, open, close }) {
+  const [q, setQ] = useState("");
+  const list = apps.filter(([, a]) => a.title.toLowerCase().includes(q.toLowerCase()));
+  return h("div", { className: "start", onPointerDown: e => e.stopPropagation() },
+    h("input", { placeholder: "Search for apps", value: q, onChange: e => setQ(e.target.value), autoFocus: true }),
+    h("h4", null, q ? "Results" : "Pinned"),
+    h("div", { className: "grid" },
+      list.map(([id, a]) => h("button", { key: id, className: "app", onClick: () => { open(id); close(); } }, h("b", null, a.icon), a.title))),
+    list.length === 0 && h("p", { style: { color: "var(--mut)", fontSize: 13 } }, "No apps match “" + q + "”."),
+    h("div", { className: "foot" }, h("span", null, "👤  Guest"), h("button", { "aria-label": "Restart", onClick: () => location.reload() }, "⏻")));
+}
+
+function App() {
+  const [wins, setWins] = useState([]);
+  const [startOpen, setStart] = useState(false);
+  const [light, setLight] = useState(false);
+  const [icons, setIcons] = useState(true);
+  const [menu, setMenu] = useState(null);
+  const [wall, setWall] = useState(null);
+  const [bing, setBing] = useState(() => { try { return localStorage.getItem("w11bing") !== "0"; } catch (e) { return true; } });
+  const setBingP = v => { setBing(v); try { localStorage.setItem("w11bing", v ? "1" : "0"); } catch (e) {} };
+  const pickWall = v => { setBingP(false); setWall(v); };
+  useEffect(() => {
+    if (!bing) return;
+    let live = true;
+    (function t(i) {
+      if (!live || i > 9) return;
+      const u = bingUrl(bingDate(i)), im = new Image();
+      im.onload = () => live && setWall(bingCss(u));
+      im.onerror = () => t(i + 1);
+      im.src = u;
+    })(0);
+    return () => { live = false; };
+  }, [bing]);
+  const [defOk, setDefOk] = useState(true);
+  const [logo, setLogoS] = useState(() => { try { return localStorage.getItem("w11logo"); } catch (e) { return null; } });
+  const setLogo = v => { setLogoS(v); try { v ? localStorage.setItem("w11logo", v) : localStorage.removeItem("w11logo"); } catch (e) {} };
+  const [installed, setInstalled] = useState(["store", "notepad", "calc", "cmd", "settings", "about"]);
+  const zRef = useRef(10), idRef = useRef(1);
+
+  const topId = wins.filter(w => !w.min).sort((a, b) => b.z - a.z)[0]?.id;
+  const patch = (id, p) => setWins(ws => ws.map(w => w.id === id ? { ...w, ...p } : w));
+  const focus = id => patch(id, { z: ++zRef.current, min: false });
+  const close = id => setWins(ws => ws.filter(w => w.id !== id));
+  const open = app => {
+    const ex = wins.find(w => w.app === app);
+    if (ex) return focus(ex.id);
+    const n = wins.length, a = APPS[app];
+    setWins(ws => [...ws, { id: idRef.current++, app, x: 120 + n * 32, y: 60 + n * 32, w: a.w, h: a.h, z: ++zRef.current, min: false, max: false }]);
+  };
+  const toggle = w => w.min || w.id !== topId ? focus(w.id) : patch(w.id, { min: true });
+  const shown = Object.entries(APPS).filter(([id]) => installed.includes(id));
+  const install = id => setInstalled(l => l.includes(id) ? l : [...l, id]);
+  const uninstall = id => { setInstalled(l => l.filter(x => x !== id)); setWins(ws => ws.filter(w => w.app !== id)); };
+  const ctx = { bing, setBing: setBingP, pickWall, logo, setLogo, wall, setWall, light, setLight, icons, setIcons, patch, focus, close, installed, install, uninstall, openApp: open };
+
+  return h("div", {
+    className: "desk" + (light ? " light" : ""), style: wall ? { background: wall } : null,
+    onPointerDown: () => { setStart(false); setMenu(null); },
+    onContextMenu: e => { e.preventDefault(); setMenu({ x: e.clientX, y: e.clientY }); }
+  },
+    icons && h("div", { className: "icons" },
+      shown.map(([id, a]) =>
+        h("button", { key: id, className: "icon", onDoubleClick: () => open(id), onKeyDown: e => e.key === "Enter" && open(id), onPointerDown: e => e.stopPropagation() },
+          h("b", null, a.icon), a.title))),
+    wins.map(w => h(Win, { key: w.id, w, ctx })),
+    startOpen && h(StartMenu, { apps: shown, open, close: () => setStart(false) }),
+    menu && h("div", { className: "menu", style: { left: menu.x, top: Math.min(menu.y, innerHeight - 130) }, onPointerDown: e => e.stopPropagation() },
+      h("button", { onClick: () => { setIcons(!icons); setMenu(null); } }, icons ? "Hide desktop icons" : "Show desktop icons"),
+      h("button", { onClick: () => { setLight(!light); setMenu(null); } }, light ? "Switch to dark mode" : "Switch to light mode"),
+      h("button", { onClick: () => { open("settings"); setMenu(null); } }, "Open Settings")),
+    h("div", { className: "tray", onPointerDown: e => e.stopPropagation() },
+      h("button", { className: "tbtn" + (startOpen ? " act" : ""), "aria-label": "Start", onClick: () => setStart(!startOpen) }, (logo || defOk) ? h("img", { src: logo || DEF_LOGO, alt: "", onError: () => { if (!logo) setDefOk(false); }, style: { width: 26, height: 26, objectFit: "contain", borderRadius: 4, verticalAlign: "middle" } }) : "⊞"),
+      shown.map(([id, a]) => {
+        const w = wins.find(x => x.app === id);
+        return h("button", { key: id, className: "tbtn" + (w ? " on" : "") + (w && w.id === topId ? " act" : ""), "aria-label": a.title, title: a.title, onClick: () => w ? toggle(w) : open(id) }, a.icon);
+      }),
+      h(Clock)));
+}
+
+ReactDOM.createRoot(document.getElementById("root")).render(h(App));
+</script>
+</body>
+</html>
